@@ -3,11 +3,20 @@ services:
   backend:
     build: ./backend
     ports: ["8000:8000"]
+    depends_on: [redis, postgres, minio]
   worker:
     build: ./backend
     command: celery -A app.worker.celery_app worker --loglevel=info
+    depends_on: [redis]
   redis:
     image: redis:7-alpine
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_PASSWORD: postgres
+  minio:
+    image: minio/minio
+    command: server /data --console-address ":9001"
   frontend:
     build: ./frontend
     ports: ["3000:3000"]
