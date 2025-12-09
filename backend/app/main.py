@@ -1,27 +1,34 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from uuid import uuid4
-from app.config import settings
+from contextlib import asynccontextmanager
 
-app = FastAPI(title=settings.api_title)
-JOBS = {}
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
-class JobIn(BaseModel):
-    prompt: str
-    kind: str = "image"
+from app.api.router import api_router
+from app.core.config import settings
+from app.core.database import Base, engine
+from app.services.storage import ensure_bucket
 
-@app.get('/health')
-def health():
-    return {'status': 'ok', 'service': 'backend'}
 
-@app.post('/api/jobs')
-def create_job(job: JobIn):
-    job_id = str(uuid4())
-    JOBS[job_id] = {"id": job_id, "status": "queued", "prompt": job.prompt, "kind": job.kind, "progress": 0}
-    return JOBS[job_id]
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    Base.metadata.create_all(bind=engine)
+    ensure_bucket()
+    yield
 
-@app.get('/api/jobs/{job_id}')
-def get_job(job_id: str):
-    if job_id not in JOBS:
-        raise HTTPException(status_code=404, detail='Job not found')
-    return JOBS[job_id]
+
+app = FastAPI(title=settings.app_name, debug=settings.app_debug, lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[origin.strip() for origin in settings.cors_origins.split(",")],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(api_router, prefix=settings.api_v1_prefix)
+
+
+@app.get("/")
+def root() -> dict[str, str]:
+    return {"message": "AI Generation Platform API is running"}
