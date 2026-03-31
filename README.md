@@ -1,5 +1,7 @@
 # AI-Powered Image & Video Generation Platform
 
+![AI Generation Platform UI](./docs/screenshot.png)
+
 A personal-project starter based on the architecture we discussed: FastAPI + Celery + Redis + PostgreSQL + MinIO + Next.js.
 
 This is a **working MVP scaffold** for a private/internal generative media platform. It includes:
@@ -29,6 +31,8 @@ This is a **working MVP scaffold** for a private/internal generative media platf
 - Full moderation pipeline
 - Real GPU autoscaling / Kubernetes deployment
 - Video generation worker implementation beyond scaffold
+
+![Tools overview](./docs/screenshot1.png)
 
 ## Quick start
 
